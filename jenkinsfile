@@ -1,0 +1,23 @@
+pipeline {
+  agent any
+  environment {
+    IMAGE_NAME = "web-app1"
+  }
+  stages {
+    stage('Checkout') {
+      steps {
+        git 'https://github.com/siddha200340/Web-App.git'
+      }
+    }
+    stage('Build Docker Image') {
+      steps {
+        sh 'docker build -t $IMAGE_NAME .'
+      }
+    }
+    stage('Run Tests') {
+      steps {
+        sh 'docker run --rm $IMAGE_NAME python -m unittest discover tests'
+      }
+    }
+  }
+}
