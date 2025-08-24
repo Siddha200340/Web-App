@@ -1,23 +1,32 @@
 pipeline {
-  agent any
-  environment {
-    IMAGE_NAME = "web-app1"
-  }
-  stages {
-    stage('Checkout') {
-      steps {
-        git 'https://github.com/siddha200340/Web-App.git'
-      }
+    agent any
+    environment {
+        IMAGE_NAME = "web-app1"
+        CONTAINER_NAME = "web-app1-test"
     }
-    stage('Build Docker Image') {
-      steps {
-        sh 'docker build -t $IMAGE_NAME .'
-      }
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/siddha200340/Web-App.git'
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                bat "docker build -t %IMAGE_NAME% ."
+            }
+        }
+        stage('Run Tests') {
+            steps {
+                bat """
+                    docker run --rm --name %CONTAINER_NAME% %IMAGE_NAME% ^
+                    python -m unittest discover tests
+                """
+            }
+        }
     }
-    stage('Run Tests') {
-      steps {
-        sh 'docker run --rm $IMAGE_NAME python -m unittest discover tests'
-      }
+    post {
+        always {
+            bat 'docker ps -aq --filter "name=web-app1-test" | for /f "tokens=*" %i in (\'more\') do docker rm -f %i'
+        }
     }
-  }
 }
